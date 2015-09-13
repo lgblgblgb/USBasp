@@ -144,7 +144,6 @@ uchar usbFunctionSetup(uchar data[8]) {
 		prog_sck = data[2];
 		replyBuffer[0] = 0;
 		len = 1;
-
 	} else if (data[1] == USBASP_FUNC_TPI_CONNECT) {
 		tpi_dly_cnt = data[2] | (data[3] << 8);
 
@@ -160,7 +159,6 @@ uchar usbFunctionSetup(uchar data[8]) {
 
 		clockWait(16);
 		tpi_init();
-	
 	} else if (data[1] == USBASP_FUNC_TPI_DISCONNECT) {
 
 		tpi_send_byte(TPI_OP_SSTCS(TPISR));
@@ -180,42 +178,34 @@ uchar usbFunctionSetup(uchar data[8]) {
 		ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
 
 		ledRedOff();
-	
 	} else if (data[1] == USBASP_FUNC_TPI_RAWREAD) {
 		replyBuffer[0] = tpi_recv_byte();
 		len = 1;
-	
 	} else if (data[1] == USBASP_FUNC_TPI_RAWWRITE) {
 		tpi_send_byte(data[2]);
-	
 	} else if (data[1] == USBASP_FUNC_TPI_READBLOCK) {
 		prog_address = (data[3] << 8) | data[2];
 		prog_nbytes = (data[7] << 8) | data[6];
 		prog_state = PROG_STATE_TPI_READ;
 		len = 0xff; /* multiple in */
-	
 	} else if (data[1] == USBASP_FUNC_TPI_WRITEBLOCK) {
 		prog_address = (data[3] << 8) | data[2];
 		prog_nbytes = (data[7] << 8) | data[6];
 		prog_state = PROG_STATE_TPI_WRITE;
 		len = 0xff; /* multiple out */
-	
 	} else if (data[1] == USBASP_FUNC_GETCAPABILITIES) {
 		replyBuffer[0] = USBASP_CAP_0_TPI;
 		replyBuffer[1] = 0;
 		replyBuffer[2] = 0;
 		replyBuffer[3] = 0;
 		len = 4;
-
 	} else if (data[1] == USBASP_FUNC_SPI_RECVSTART) {
 		spiInit();
 		prog_state = PROG_STATE_SERIAL;
-
 	} else if (data[1] == USBASP_FUNC_SPI_RECVSTOP) {
 		ledRedOff();
 		ispDisconnect();
 		prog_state = PROG_STATE_IDLE;
-
 	} else if (data[1] == USBASP_FUNC_SPI_RECV) {
 		len = 0;
 		while (comStart != comStop && len < 8) {
