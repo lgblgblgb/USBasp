@@ -24,6 +24,7 @@
 #include "clock.h"
 #include "tpi.h"
 #include "tpi_defs.h"
+#include "uart.h"
 
 static uchar replyBuffer[8];
 
@@ -44,8 +45,8 @@ static unsigned int prog_nbytes = 0;
 static unsigned int prog_pagesize;
 static uchar prog_blockflags;
 static uchar prog_pagecounter;
-
-
+static uchar debug_byte = 'X';
+static unsigned long baud = BAUD_RATE;
 
 ISR(SPI_STC_vect, ISR_NOBLOCK)
 {
@@ -55,7 +56,7 @@ ISR(SPI_STC_vect, ISR_NOBLOCK)
 
 uchar usbFunctionSetup(uchar data[8]) {
 
-	uchar len = 0;
+	uchar len = 0, i;
 
 	if (data[1] == USBASP_FUNC_CONNECT) {
 
@@ -144,6 +145,7 @@ uchar usbFunctionSetup(uchar data[8]) {
 		prog_sck = data[2];
 		replyBuffer[0] = 0;
 		len = 1;
+
 	} else if (data[1] == USBASP_FUNC_TPI_CONNECT) {
 		tpi_dly_cnt = data[2] | (data[3] << 8);
 
@@ -159,6 +161,7 @@ uchar usbFunctionSetup(uchar data[8]) {
 
 		clockWait(16);
 		tpi_init();
+
 	} else if (data[1] == USBASP_FUNC_TPI_DISCONNECT) {
 
 		tpi_send_byte(TPI_OP_SSTCS(TPISR));
@@ -178,34 +181,42 @@ uchar usbFunctionSetup(uchar data[8]) {
 		ISP_OUT &= ~((1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI));
 
 		ledRedOff();
+
 	} else if (data[1] == USBASP_FUNC_TPI_RAWREAD) {
 		replyBuffer[0] = tpi_recv_byte();
 		len = 1;
+
 	} else if (data[1] == USBASP_FUNC_TPI_RAWWRITE) {
 		tpi_send_byte(data[2]);
+
 	} else if (data[1] == USBASP_FUNC_TPI_READBLOCK) {
 		prog_address = (data[3] << 8) | data[2];
 		prog_nbytes = (data[7] << 8) | data[6];
 		prog_state = PROG_STATE_TPI_READ;
 		len = 0xff; /* multiple in */
+
 	} else if (data[1] == USBASP_FUNC_TPI_WRITEBLOCK) {
 		prog_address = (data[3] << 8) | data[2];
 		prog_nbytes = (data[7] << 8) | data[6];
 		prog_state = PROG_STATE_TPI_WRITE;
 		len = 0xff; /* multiple out */
+
 	} else if (data[1] == USBASP_FUNC_GETCAPABILITIES) {
 		replyBuffer[0] = USBASP_CAP_0_TPI;
 		replyBuffer[1] = 0;
 		replyBuffer[2] = 0;
 		replyBuffer[3] = 0;
 		len = 4;
+
 	} else if (data[1] == USBASP_FUNC_SPI_RECVSTART) {
 		spiInit();
 		prog_state = PROG_STATE_SERIAL;
+
 	} else if (data[1] == USBASP_FUNC_SPI_RECVSTOP) {
 		ledRedOff();
 		ispDisconnect();
 		prog_state = PROG_STATE_IDLE;
+
 	} else if (data[1] == USBASP_FUNC_SPI_RECV) {
 		len = 0;
 		while (comStart != comStop && len < 8) {
@@ -214,6 +225,42 @@ uchar usbFunctionSetup(uchar data[8]) {
 			len ++;
 		}
 	}
+	/* ---- EMK Modifications for DEBUG serial interface ---- */
+	else if (data[1] == USBASP_FUNC_UART_GETBYTE) {
+		/* Get a byte From UART outBuf (if any) send to HOST */
+		if (UART_outbufsize() > 0)
+			replyBuffer[0] = UART_outBuf_get();	/* get a byte from the outBuf buffer */
+		else
+			replyBuffer[0] = 0;	/* nothing to send, send NULL byte */
+		len = 1;
+	} else if (data[1] == USBASP_FUNC_UART_PUTBYTE) {
+		/* Get Data From HOST to be sent to UART */
+		debug_byte = data[2];		/* save byte to debug_byte */
+		PORTC &= 0xFC;			/* clear Low 2 bits */
+		PORTC |= ~debug_byte & 0x03;	/* show Low 2 bits in LEDs */
+		UART_inBuf_put(debug_byte);	/* save in inBuf for sending to UART */
+	} else if (data[1] == USBASP_FUNC_UART_GETBYTECOUNT) {
+		/* Get #of bytes from UART waiting to be sent to HOST */
+		replyBuffer[0] = UART_outbufsize();  /* get #of bytes in outBuf buffer */
+		len = 1;
+	} else if (data[1] == USBASP_FUNC_UART_SETBAUDRATE) {
+		/* Set UART Baud Rate (53) */
+		baud = *((unsigned long*) & data[2]);
+		UART_init(baud);
+		replyBuffer[0] = 0x53;	/* return Code = command in Hex */
+		len = 1;
+	} else if (data[1] == USBASP_FUNC_TEST_CMD1) {
+		/* Just For Demonstration ... */
+		PORTC |= 0x03;	/* both LEDs OFF */
+		for(i = 0; i < 10; i++) {	/* make the LEDs blink for 816ms */
+			clockWait(255);		/* 320us * 255 = 81.6ms */
+			PORTC++;
+		}
+		PORTC = 0xFC;			/* restore the state of the LEDs */
+		replyBuffer[0] = debug_byte;	/* just return last byte sent from Host */
+		len = 1;
+	}
+	/* [END] EMK Modifications for DEBUG serial interface */
 
 	usbMsgPtr = replyBuffer;
 
@@ -349,6 +396,9 @@ int main(void) {
 	DDRC = 0x03;
 	PORTC = 0xfe;
 
+	/* init UART */
+	UART_init(baud);
+
 	/* init timer */
 	clockInit();
 
@@ -379,7 +429,8 @@ int main(void) {
 				toggleLedRed();
 				blink_counter = (unsigned int)(1UL << 15);
 			}
-		}
+		} else
+			UART_poll();
 	}
 	return 0;
 }
