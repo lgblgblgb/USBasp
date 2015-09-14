@@ -224,9 +224,8 @@ uchar usbFunctionSetup(uchar data[8]) {
 			comStart ++;
 			len ++;
 		}
-	}
 	/* ---- EMK Modifications for DEBUG serial interface ---- */
-	else if (data[1] == USBASP_FUNC_UART_GETBYTE) {
+	} else if (data[1] == USBASP_FUNC_UART_GETBYTE) {
 		/* Get a byte From UART outBuf (if any) send to HOST */
 		if (UART_outbufsize() > 0)
 			replyBuffer[0] = UART_outBuf_get();	/* get a byte from the outBuf buffer */

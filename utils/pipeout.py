@@ -39,6 +39,8 @@ try:
             for char in data:
                 sys.stdout.write(chr(char))
             sys.stdout.flush()
-
 except KeyboardInterrupt:
     disableSerialMode(handle)
+except:
+    disableSerialMode(handle)
+    raise

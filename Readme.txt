@@ -10,7 +10,8 @@ From the original documentation:
 
 This repository contains a patched version of the original USBasp firmware
 compared to the "official" firmware. Please note, that you may have problems
-with this one, use this at your OWN risk!
+with this one, use this at your OWN risk! If you are a regular user not so
+interested in extra features, please stick with the official firmware!
 
 The official firmware can be found here: http://www.fischl.de/usbasp/
 
@@ -21,12 +22,14 @@ Step 1:
 	http://www.fischl.de/usbasp/
 	usbasp.2011-05-28.tar.gz
 	Original/official firmware
+	Readme-original.txt contains the original Readme of the project
+	Changelog-original.txt contains the original Changelog of the project
 
 Step 2:
 
 	https://github.com/stefanbeller/USBasp
-	Original firmware was imported to a Github respository by Stefan Beller.
-	It was then modified/extended by him, key features:
+	Original firmware was imported to a Github respository by Stefan
+	Beller. It was then modified/extended by him, key features:
 
 	* Missing "const" keywords at "PROGMEM" directives to allow to compile
 	  the source with newer avr-gcc versions (older ones seems to ignore
@@ -42,11 +45,14 @@ Step 2:
 Step 3:
 
 	http://www.avrfreaks.net/projects/usbasp-tty-usbasp-programmer-modified-serial-support-and-terminal-program
-	"Emklaus" (aka EMK) patched the original (step 1) firmware with to allow to use the
-	RX/TX (TTL serial) lines of the programmer, so the target device can communicate with the PC through
-	the USBasp which "relays" (bi-directional) the information towards the PC. A Windows based client
-	software is also provided in the archive. Currently I did not import the client software itself, as it's
-	too platform dependent (Windows only, I do not use Windows).
+	"Emklaus" (aka EMK) patched the original (step 1) firmware to
+	allow to use the RX/TX (TTL serial) lines of the programmer, so the
+	target device can communicate with the PC through the USBasp which
+	"relays" (bi-directional) the information towards the PC. A Windows
+	based client software is also provided in the archive. Currently I
+	did not import the client software itself, as it's too platform
+	dependent (Windows only, I do not use Windows).
+	EMK's work often referred as "USBasp-TTY".
 
 	Greetings, great work of the author, thanks!
 
@@ -54,14 +60,19 @@ Step 4:
 
 	https://github.com/lgblgblgb/USBasp
 	I (LGB, lgblgblgb on github) have forked Stefan Beller's repository on
-	Github (step 2), and merged EMK's (step 3) changes into the repository with
-	some manual work (it wouldn't apply automatically by "patch"). Also, some
-	cosmetical changes, and unify line endings hell (mixed DOS / UNIX style).
+	Github (step 2), and merged EMK's (step 3) changes into the repository
+	with some manual work (it wouldn't apply automatically by "patch").
+	Also, some cosmetical changes, and unify line endings hell (mixed
+	DOS / UNIX style). Of course much more work is planned for the future.
+	Changelog.txt contains the changelog of my changes (including my work
+	and using other's work as well, as it noted above)
 
+Step 5:
 
-Planned changes by me:
+	Plans, ongoing new work from me, testing.
 
-	Provide a python based utility by my own with the ability of Stefan Beller's
-	"pipeout" functionality with other features, including the USBasp-tty
-	functionality some time.
+	Including:
+
+	utils/usbasp.py will be a python based utility with functions including
+	pipeout.py's but also USBasp-tty client works later.
 

@@ -75,6 +75,9 @@ main.hex:	main.bin
 disasm:	main.bin
 	avr-objdump -d main.bin
 
+disthex: main.hex
+	cp main.hex ../bin/usbasp.atmega8.lgblgblgb-git-repo.hex
+
 cpp:
 	$(COMPILE) -E main.c
 
