@@ -1,11 +1,6 @@
 #ifndef UART_H
 #define UART_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 // INBUF_SIZE & OUTBUFSIZE MUST be power of 2 (e.g. 2,4,8,16,32,64,128...)
 #define UART_INBUF_SIZE          128
 #define UART_OUTBUF_SIZE         128
@@ -89,10 +84,5 @@ unsigned char UART_inBuf_get(void);
 // ***********************************************************
 unsigned char UART_outBuf_get(void);
 
-#ifdef __cplusplus
-}
 #endif
-
-#endif
-
 

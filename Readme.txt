@@ -1,142 +1,67 @@
-This is the README file for USBasp.
+Original Readme.txt can (and should) be found as: Readme-original.txt
+Please read it!
 
-USBasp is a USB in-circuit programmer for Atmel AVR controllers. It simply
-consists of an ATMega88 or an ATMega8 and a couple of passive components.
-The programmer uses a firmware-only USB driver, no special USB controller
-is needed.
+From the original documentation:
 
-Features:
-- Works under multiple platforms. Linux, Mac OS X and Windows are tested.
-- No special controllers or smd components are needed.
-- Programming speed is up to 5kBytes/sec.
-- SCK option to support targets with low clock speed (< 1,5MHz).
-- Planned: serial interface to target (e.g. for debugging).
+"USBasp is a USB in-circuit programmer for Atmel AVR controllers. It simply
+ consists of an ATMega88 or an ATMega8 and a couple of passive components.
+ The programmer uses a firmware-only USB driver, no special USB controller
+ is needed."
 
+This repository contains a patched version of the original USBasp firmware
+compared to the "official" firmware. Please note, that you may have problems
+with this one, use this at your OWN risk!
 
-LICENSE
+The official firmware can be found here: http://www.fischl.de/usbasp/
 
-USBasp is distributed under the terms and conditions of the GNU GPL version
-2 (see "firmware/usbdrv/License.txt" for details).
+History, important changes compared to the original firmware:
 
-USBasp is built with V-USB driver by OBJECTIVE DEVELOPMENT GmbH. See
-"firmware/usbdrv/" for further information.
+Step 1:
 
+	http://www.fischl.de/usbasp/
+	usbasp.2011-05-28.tar.gz
+	Original/official firmware
 
-LIMITATIONS
+Step 2:
 
-Hardware:
-This package includes a circuit diagram. This circuit can only be used for
-programming 5V target systems. For other systems a level converter is needed.
+	https://github.com/stefanbeller/USBasp
+	Original firmware was imported to a Github respository by Stefan Beller.
+	It was then modified/extended by him, key features:
 
-Firmware:
-The firmware dosn't support USB Suspend Mode. A bidirectional serial
-interface to slave exists in hardware but the firmware doesn't support it yet.
+	* Missing "const" keywords at "PROGMEM" directives to allow to compile
+	  the source with newer avr-gcc versions (older ones seems to ignore
+	  the problem so it worked)
 
+	* Target pushed data (as target being the SPI master) via SPI is stored
+	  in the communication buffer, which can be read from your PC. A simple
+	  Python based tool is provided by him for this purpose. It's only
+	  uni-directional
 
-USE PRECOMPILED VERSION
+	Greetings, great work of the author, thanks!
 
-Firmware:
-Flash "bin/firmware/usbasp.atmega88.xxxx-xx-xx.hex" or
-"bin/firmware/usbasp.atmega8.xxxx-xx-xx.hex" to the used controller with a
-working programmer (e.g. with avrdude, uisp, ...). Set jumper J2 to activate
-USBasp firmware update function.
-You have to change the fuse bits for external crystal (see "make fuses").
-# TARGET=atmega8    HFUSE=0xc9  LFUSE=0xef
-# TARGET=atmega48   HFUSE=0xdd  LFUSE=0xff
-# TARGET=atmega88   HFUSE=0xdd  LFUSE=0xff
+Step 3:
 
-Windows:
-Start Windows and connect USBasp to the system. When Windows asks for a
-driver, choose "bin/win-driver". On Win2k and WinXP systems, Windows will
-warn that the driver is is not 'digitally signed'. Ignore this message and
-continue with the installation.
-Now you can run avrdude. Examples:
-1. Enter terminal mode with an AT90S2313 connected to the programmer:
-   avrdude -c usbasp -p at90s2313 -t
-2. Write main.hex to the flash of an ATmega8:
-   avrdude -c usbasp -p atmega8 -U flash:w:main.hex
+	http://www.avrfreaks.net/projects/usbasp-tty-usbasp-programmer-modified-serial-support-and-terminal-program
+	"Emklaus" (aka EMK) patched the original (step 1) firmware with to allow to use the
+	RX/TX (TTL serial) lines of the programmer, so the target device can communicate with the PC through
+	the USBasp which "relays" (bi-directional) the information towards the PC. A Windows based client
+	software is also provided in the archive. Currently I did not import the client software itself, as it's
+	too platform dependent (Windows only, I do not use Windows).
 
-Setting jumpers:
-J1 Power target
-   Supply target with 5V (USB voltage). Be careful with this option, the
-   circuit isn't protected against short circuit!
-J2 Jumper for firmware upgrade (not self-upgradable)
-   Set this jumper for flashing the ATMega(4)8 of USBasp with another working
-   programmer.
-J3 SCK option
-   If the target clock is lower than 1,5 MHz, you have to set this jumper.
-   Then SCK is scaled down from 375 kHz to about 8 kHz.
+	Greetings, great work of the author, thanks!
+
+Step 4:
+
+	https://github.com/lgblgblgb/USBasp
+	I (LGB, lgblgblgb on github) have forked Stefan Beller's repository on
+	Github (step 2), and merged EMK's (step 3) changes into the repository with
+	some manual work (it wouldn't apply automatically by "patch"). Also, some
+	cosmetical changes, and unify line endings hell (mixed DOS / UNIX style).
 
 
-BUILDING AND INSTALLING FROM SOURCE CODE
+Planned changes by me:
 
-Firmware:
-To compile the firmware
-1. install the GNU toolchain for AVR microcontrollers (avr-gcc, avr-libc),
-2. change directory to firmware/
-3. run "make main.hex"
-4. flash "main.hex" to the ATMega(4)8. E.g. with uisp or avrdude (check
-the Makefile option "make flash"). To flash the firmware you have
-to set jumper J2 and connect USBasp to a working programmer.
-You have to change the fuse bits for external crystal, (check the Makefile
-option "make fuses").
+	Provide a python based utility by my own with the ability of Stefan Beller's
+	"pipeout" functionality with other features, including the USBasp-tty
+	functionality some time.
 
-Software (avrdude):
-AVRDUDE supports USBasp since version 5.2. 
-1. install libusb: http://libusb.sourceforge.net/
-2. get latest avrdude release: http://download.savannah.gnu.org/releases/avrdude/
-3. cd avrdude-X.X.X
-5. configure to your environment:
-   ./bootstrap (I had to comment out the two if-blocks which verify the
-                installed versions of autoconf and automake)
-   ./configure
-6. compile and install it:
-   make 
-   make install
-
-Notes on Windows (Cygwin):
-Download libusb-win32-device-bin-x.x.x.x.tar.gz from
-http://libusb-win32.sourceforge.net/ and unpack it.
--> copy lib/gcc/libusb.a to lib-path
--> copy include/usb.h to include-path
-cd avrdude
-./configure LDFLAGS="-static" --enable-versioned-doc=no
-make
-
-Notes on Darwin/MacOS X:
-after "./configure" I had to edit Makefile:
-change "avrdude_CPPFLAGS" to "AM_CPPFLAGS"
-(why is this needed only on mac? bug in configure.ac?)
-
-Notes on Linux:
-To use USBasp as non-root, you have to define some device rules. See
-bin/linux-nonroot for an example.
-
-FILES IN THE DISTRIBUTION
-
-Readme.txt ...................... The file you are currently reading
-firmware ........................ Source code of the controller firmware
-firmware/usbdrv ................. AVR USB driver by Objective Development
-firmware/usbdrv/License.txt ..... Public license for AVR USB driver and USBasp
-circuit ......................... Circuit diagram in PDF and EAGLE format
-bin ............................. Precompiled programs
-bin/win-driver .................. Windows driver
-bin/firmware .................... Precompiled firmware
-bin/linux-nonroot ............... Linux device rule file
-
-
-MORE INFORMATION
-
-For more information on USBasp and it's components please visit the
-following URLs:
-
-USBasp .......................... http://www.fischl.de/usbasp/
-
-Firmware-only V-USB driver ...... http://www.obdev.at/products/vusb/
-avrdude ......................... http://www.nongnu.org/avrdude/
-libusb .......................... http://libusb.sourceforge.net/
-libusb-win32 .................... http://libusb-win32.sourceforge.net/
-
-
-2011-05-28 Thomas Fischl <tfischl@gmx.de>
-http://www.fischl.de
